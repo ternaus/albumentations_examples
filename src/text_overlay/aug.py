@@ -3,9 +3,9 @@ from collections.abc import Callable
 from pathlib import Path
 
 import numpy as np
-import RAKE
 from nltk.corpus import wordnet
 from nltk.tag.stanford import StanfordPOSTagger
+from rake_nltk import Rake
 
 
 class TextAugmenter:
@@ -16,7 +16,7 @@ class TextAugmenter:
             path_to_jar=pos_jar_path,
             java_options="-mx4000m",
         )
-        self.rake = RAKE.Rake(stopwords_path)
+        self.rake = Rake(stopwords_path)
         self.rng = np.random.default_rng(seed)  # Initialize the random generator with an optional seed
 
     @staticmethod
