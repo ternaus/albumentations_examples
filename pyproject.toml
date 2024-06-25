@@ -121,6 +121,7 @@ lint.select = [
 lint.ignore = [
   # "A002",
   "ANN101",
+  "BLE001",
   # "ANN102",
   # "ANN204",
   # "ANN401",
@@ -130,13 +131,15 @@ lint.ignore = [
   # "B027",
   "D100",
   "D101",
-  # "D102",
+  "D102",
   "D103",
   "D104",
   "D105",
   # "D106",
   "D107",
-  # "TRY003",
+  "E722",
+  "EM101",
+  "ERA001",
   "N812",
   # "D205",
   # "D415",
@@ -147,9 +150,11 @@ lint.ignore = [
   # "FBT002",
   # "FBT003",
   # "G004",
-  # "PLR0913",
+  "PLR0913",
+  "PLR2004",
   # "PTH123",
   "S311",
+  "TRY003",
 ]
 
 # Allow fix for all enabled rules (when `--fix`) is provided.

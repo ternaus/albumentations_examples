@@ -41,12 +41,19 @@ class DocumentDataset(Dataset):
 
         fraction = random.uniform(*self.fraction_range)
 
+        # aug = TextAugmenter(
+        #         stopwords_path=str(self.data_path / "stopwords.txt"),
+        #         pos_model_path=str(self.data_path / "english.pickle"),
+        #         pos_jar_path=str(self.data_path / "stanford-postagger.jar"),
+        #     )
+
         metadata = prepare_metadata(
             image_shape=image_array.shape[:2],
             bboxes=label["bbox"],
             texts=label["text"],
             fraction=fraction,
             font_path=str(self.font_path),
+            aug=None,
         )
 
         transformed = self.transform(image=image_array, overlay_metadata=metadata)["image"]
