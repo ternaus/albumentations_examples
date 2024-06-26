@@ -10,15 +10,14 @@ from PIL import Image
 from torch.utils.data import DataLoader, Dataset
 from tqdm import tqdm
 
-from src.text_overlay.utils import prepare_metadata
+from src.text_overlay.aug import TextAugmenter
+from src.text_overlay.utils import normalized_top_left2albumentations
 
 
 class DocumentDataset(Dataset):
-    def __init__(self, data_path: Path, font_path: Path, transform: A.Compose) -> None:
+    def __init__(self, data_path: Path, transform: A.Compose) -> None:
         self.data_path = data_path
         self.tif_file_paths = sorted(self.data_path.rglob("*.tif"))
-        self.fraction_range = (0.1, 0.9)
-        self.font_path = font_path
         self.transform = transform
 
     def __len__(self) -> int:
@@ -39,24 +38,14 @@ class DocumentDataset(Dataset):
         image_array = np.array(img.convert("RGB"))
         label = labels["pages"][page_id]
 
-        fraction = random.uniform(*self.fraction_range)
+        processed_bboxes = [normalized_top_left2albumentations(bbox) for bbox in label["bbox"]]
 
-        # aug = TextAugmenter(
-        #         stopwords_path=str(self.data_path / "stopwords.txt"),
-        #         pos_model_path=str(self.data_path / "english.pickle"),
-        #         pos_jar_path=str(self.data_path / "stanford-postagger.jar"),
-        #     )
+        metadata = {
+            "bboxes": processed_bboxes,
+            "texts": label["text"],
+        }
 
-        metadata = prepare_metadata(
-            image_shape=image_array.shape[:2],
-            bboxes=label["bbox"],
-            texts=label["text"],
-            fraction=fraction,
-            font_path=str(self.font_path),
-            aug=None,
-        )
-
-        transformed = self.transform(image=image_array, overlay_metadata=metadata)["image"]
+        transformed = self.transform(image=image_array, textaug_metadata=metadata)["image"]
 
         return {"image": transformed, "id": str(tif_file_path.relative_to(self.data_path).stem)}
 
@@ -64,14 +53,17 @@ class DocumentDataset(Dataset):
 def main(input_folder: Path, font_path: Path, output_folder: Path) -> None:
     transform = A.Compose(
         [
-            A.OverlayElements(p=1),
+            TextAugmenter(
+                font_path=font_path,
+                p=1,
+            ),
             A.RandomCrop(p=1, height=1024, width=1024),
             A.PlanckianJitter(p=1),
             A.Affine(p=1),
         ],
     )
 
-    dataset = DocumentDataset(input_folder, font_path, transform)
+    dataset = DocumentDataset(input_folder, transform)
     data_loader = DataLoader(dataset, batch_size=1, shuffle=False, num_workers=0)
 
     output_folder.mkdir(exist_ok=True, parents=True)
